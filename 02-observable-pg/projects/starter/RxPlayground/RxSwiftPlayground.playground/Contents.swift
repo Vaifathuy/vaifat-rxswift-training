@@ -42,3 +42,9 @@ example(of: "just, of, from") {
     
     let observable = Observable<Int>.just(one)
 }
+
+let sequence = 0..<3
+var iterator = sequence.makeIterator()
+while let n = iterator.next() {
+    print(n)
+}
