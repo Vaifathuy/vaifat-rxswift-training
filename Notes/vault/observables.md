@@ -92,8 +92,6 @@ let observable = Observable<Int>.range(start: 1, count: 10)
 > Use `create` operator to create an observable and at the same time specify all the events the observable will emit to subscribers.
 
 ```swift
-let disposeBag = DisposeBag()
-
 Observable<String>.create { observer: AnyObserver<String> in 
 
     observer.onNext("1")
@@ -149,7 +147,6 @@ completed
 ## **Disposing and terminating**
 > To manually terminate an observable, we use _**`dispose`**_ operator.
 
-Example:
 ```swift
 let observable = Observable.of("A", "B", "C")
 let subscription = observable.subscribe { event in
@@ -171,4 +168,54 @@ Observable.of("A", "B", "C")
     }
     .diposed(by: disposeBag)
 ```
+
+---
+## **Creating observable factories**
+> Create a flexible observable with _**`deferred`**_ operator.
+
+```swift
+let disposeBag = DisposeBag()
+var flip = false
+let factory: Observable<Int> = Observable.deferred {
+
+    flip.toggle()
+
+    if flip {
+      return Observable.of(1, 2, 3)
+    } else {
+      return Observable.of(4, 5, 6)
+    }
+}
+
+for _ in 0...3 {
+    factory.subscribe(onNext: {
+        print($0, terminator: "")
+    })
+    .disposed(by: disposeBag)
+    print() 
+}
+```
+Result
+```swift
+123
+456
+123
+456
+```
+
+---
+## **Using Traits**
+> Traits are observables with a narrower set of behaviors than regular observables. Using traits can help make your code more intuitive. 
+
+>There are `three` kinds of traits in RxSwift: `Single`, `Maybe`, `Completable`.
+
+### **`Single`**:
+> Single will emit either a _`success(value)`_ or _`error(error)`_ event. 
+
+>_`success(value)`_ is actually a combination of the next and completed events. 
+
+> <> It is useful for one-time processes that will either succeed and yield a value or fail such as when downloading data or loading it from disk.
+
+### **`Completable`**:
+> 
 
