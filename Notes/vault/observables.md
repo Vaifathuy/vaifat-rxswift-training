@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1631521838261
+updated: 1631594389767
 created: 1630999552309
 ---
 
@@ -216,6 +216,8 @@ Result
 
 > <> It is useful for one-time processes that will either succeed and yield a value or fail such as when downloading data or loading it from disk.
 
-### **`Completable`**:
-> 
+### **`Completable`**: 
+> A completable will only emit a _`completed`_ or _`error(error)`_ event. It will not emit any values.
+
+> It is useful when you only care that an operation completed successfully or failed, such as a file write.
 

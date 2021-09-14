@@ -1,0 +1,43 @@
+{
+	"Swift Snippet": {
+		"prefix": ["swift", "ssnippet"],
+		"body": [
+			"```swift",
+			"${0:Add your code block here}",
+			"```"
+		],
+		"description": "Code Snippet formatted for Swift Programming Language"
+	},
+
+	"Bold Section Title": {
+		"prefix": ["boldsection", "bst"],
+		"body": [
+			"## **${0:Bold Section Title}**"
+		],
+		"description": "for Bold Section Title format"
+	},
+
+	"Regular Sub-Section Title": {
+		"prefix": ["regularsubsection", "rsst"],
+		"body": [
+			"### ${0:Regular Sub-Section Title}"
+		],
+		"description": "for Regular Sub-Section Title format"
+	},
+
+	"Regular Highlight Text": {
+		"prefix": ["regularhighlight", "rht"],
+		"body": [
+			"`${0:Regular Highlight Text}`"
+		],
+		"description": "for Regular Highlight Text format"
+	},
+	
+	"Bold Highlight Text": {
+		"prefix": ["boldhighlight", "bht"],
+		"body": [
+			"**`${0:Bold Highlight Text}`**"
+		],
+		"description": "for Bold Highlight Text format"
+	}
+}
