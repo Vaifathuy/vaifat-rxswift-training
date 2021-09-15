@@ -25,6 +25,30 @@
 		"description": "for Regular Sub-Section Title format"
 	},
 
+	"Regular Hightlight Sub-Section Title": {
+		"prefix": ["regularsubsection", "rhsst"],
+		"body": [
+			"### `${0:Regular Hightlight Sub-Section Title}`"
+		],
+		"description": "for Regular Hightlight Sub-Section Title format"
+	},
+
+	"Bold Sub-Section Title": {
+		"prefix": ["boldsubsection", "bsst"],
+		"body": [
+			"### **${0:Bold Sub-Section Title}**"
+		],
+		"description": "for Bold Sub-Section Title format"
+	},
+
+	"Bold Hightlight Sub-Section Title": {
+		"prefix": ["boldsubsection", "bhsst"],
+		"body": [
+			"### **`${0:Bold Hightlight Sub-Section Title}`**"
+		],
+		"description": "for Bold Hightlight Sub-Section Title format"
+	},
+
 	"Regular Highlight Text": {
 		"prefix": ["regularhighlight", "rht"],
 		"body": [

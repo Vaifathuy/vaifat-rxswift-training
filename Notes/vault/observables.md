@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1631594389767
+updated: 1631698970481
 created: 1630999552309
 ---
 
@@ -217,7 +217,11 @@ Result
 > <> It is useful for one-time processes that will either succeed and yield a value or fail such as when downloading data or loading it from disk.
 
 ### **`Completable`**: 
-> A completable will only emit a _`completed`_ or _`error(error)`_ event. It will not emit any values.
+> A Completable will only emit a _`completed`_ or _`error(error)`_ event. It will not emit any values.
 
-> It is useful when you only care that an operation completed successfully or failed, such as a file write.
+> <> It is useful when you only care that an operation completed successfully or failed, such as a file write.
 
+### **`Maybe`**:
+> A Maybe is a mashup of a Single and Completable. It can either emit a _`success(value)`_, _`completed`_ or _`error(error)`_. 
+
+> <> It is useful with an operation that could either succeed or fail, and optionally return a value on success.
