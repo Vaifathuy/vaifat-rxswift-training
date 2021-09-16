@@ -9,6 +9,14 @@
 		"description": "Code Snippet formatted for Swift Programming Language"
 	},
 
+	"Bold Title": {
+		"prefix": ["boldtitle", "bt"],
+		"body": [
+			"# **`</> ${0: Bold Title}`**"
+		],
+		"description": "for Bold Title"
+	},
+
 	"Bold Section Title": {
 		"prefix": ["boldsection", "bst"],
 		"body": [
