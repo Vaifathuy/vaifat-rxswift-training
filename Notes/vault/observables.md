@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1631864335665
+updated: 1631865377794
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -556,7 +556,6 @@ Result:
 2) 2
 
 Crrent value of relay: 2
-
 ```
 
 > Note: `BehaviorRelay` let you directly access their current value through `.value` property.
