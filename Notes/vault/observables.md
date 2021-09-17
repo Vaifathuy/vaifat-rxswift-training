@@ -2,13 +2,13 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1631784148634
+updated: 1631864335665
 created: 1630999552309
 ---
 # **`</> Observables`**
 
 ## **What is an observable?**
-An Observable is a sequence emitting`events`asynchronously over a period of time. 
+An Observable is a sequence emitting `events` asynchronously over a period of time. 
 
 **`Events`** can be any values:
 - Number;
@@ -336,7 +336,7 @@ Result:
 // latest value of the behavior subject
 2) anError 
 ```
-
+---
 ## **Replay Subjects**
 `Replay subjects` will temporarily _`cache`_, or _`buffer`_, the latest _`elements`_ they emit, _`up to a specified size`_ of your choosing. They will then **_`replay`_** that buffer to new subscribers.
 
@@ -490,3 +490,73 @@ Result:
  3) Object `RxSwift...ReplayMany<Swift.String>` was already
 disposed.
 ```
+---
+## **Working with Relays**
+Unlike other subjects, we add a value onto a relay by using `accept(_:)` method because relays can only accept values; you `cannot add` an _`error`_ or _`completed`_ event onto them.
+
+> `PublishRelay` and `BehaviorRelay` are just wrapper of `PublishSubject` and `BehaviorSubject`, respectively. Relays are guaranteed to never terminate.
+
+Example - PublishRelay:
+```swift
+let relay = PublishRelay<String>()
+
+let disposeBag = DisposeBag()
+
+relay.accept("Hello world!")
+
+relay
+  .subscribe(onNext: {
+    print($0) 
+  })
+  .disposed(by: disposeBag)
+
+relay.accept("1")
+```
+
+Result:
+```swift
+1
+```
+
+Example 1 - BehaviorRelay:
+```swift
+let relay = BehaviorRelay(value: "Initial value")
+
+let disposeBag = DisposeBag()
+
+relay.accept("New initial value")
+
+relay
+  .subscribe {
+    print(label: "1) \($0)")
+  }
+  .disposed(by: disposeBag)
+
+
+relay.accept("1")
+
+relay
+  .subscribe {
+    print(label: "2) \($0)")
+  }
+  .disposed(by: disposeBag)
+
+relay.accept("2")
+
+print("Current value of relay: \(relay.value))
+
+```
+
+Result:
+```swift
+1) New initial value 
+1) 1
+2) 1
+1) 2
+2) 2
+
+Crrent value of relay: 2
+
+```
+
+> Note: `BehaviorRelay` let you directly access their current value through `.value` property.
