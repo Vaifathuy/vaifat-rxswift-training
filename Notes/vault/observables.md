@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1631865377794
+updated: 1632123984599
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -211,7 +211,7 @@ Traits are observables with a narrower set of behaviors than regular observables
 >There are `three` kinds of traits in RxSwift: `Single`, `Maybe`, `Completable`.
 
 ### **`Single`**:
-Single will emit either a _`success(value)`_ or _`error(error)`_ event. _`success(value)`_ is actually a combination of the next and completed events. 
+Single will emit just _once_ either a _`success(value)`_ or _`error(error)`_ event. _`success(value)`_ is actually a combination of the next and completed events. 
 
 > <> It is useful for one-time processes that will either succeed and yield a value or fail such as when downloading data or loading it from disk.
 
@@ -219,6 +219,10 @@ Single will emit either a _`success(value)`_ or _`error(error)`_ event. _`succes
 > A Completable will only emit a _`completed`_ or _`error(error)`_ event. It will not emit any values.
 
 > <> It is useful when you only care that an operation completed successfully or failed, such as a file write.
+
+```swift
+Add your code block here
+```
 
 ### **`Maybe`**:
 A Maybe is a mashup of a Single and Completable. It can either emit a _`success(value)`_, _`completed`_ or _`error(error)`_. 

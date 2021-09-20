@@ -66,7 +66,15 @@ class MainViewController: UIViewController {
   }
   
   @IBAction func actionSave() {
-    
+    guard let image = imagePreview.image else { return }
+    PhotoWriter.save(image)
+      .subscribe(onSuccess: { [weak self] (id) in
+        self?.showMessage("Saved with id: \(id)")
+        self?.actionClear()
+      }, onError: { [weak self] error in
+        self?.showMessage("Error", description: error.localizedDescription)
+      })
+      .disposed(by: bag)
   }
   
   @IBAction func actionAdd() {
@@ -99,4 +107,8 @@ class MainViewController: UIViewController {
     itemAdd.isEnabled = photos.count < 6
     title = photos.count > 0 ? "\(photos.count) photos" : "Collage"
   }
+}
+
+extension UIViewController {
+//  func showMessage(_ title: String, description: String? = nil) {}
 }
