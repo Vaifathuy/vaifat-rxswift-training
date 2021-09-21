@@ -43,6 +43,7 @@ class MainViewController: UIViewController {
   
   private let bag = DisposeBag()
   private let images = BehaviorRelay<[UIImage]>(value: [])
+  private var imageCache: [Int] = []
   
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -63,6 +64,8 @@ class MainViewController: UIViewController {
   
   @IBAction func actionClear() {
     images.accept([])
+    imageCache = []
+    navigationItem.leftBarButtonItem =  nil
   }
   
   @IBAction func actionSave() {
@@ -81,18 +84,50 @@ class MainViewController: UIViewController {
     let photosViewController = storyboard!.instantiateViewController(withIdentifier: "PhotosViewController") as! PhotosViewController
     navigationController?.pushViewController(photosViewController, animated: true)
     
-    photosViewController.selectedPhotos
+    let newPhotos = photosViewController.selectedPhotos.share()
+    
+    newPhotos
+      .takeWhile({ [weak self] image in
+        let count = self?.images.value.count ?? 0
+        return count < 6
+      })
+      .filter({ [weak self] in
+        let byteLength = $0.pngData()?.count ?? 0
+        guard self?.imageCache.contains(byteLength) == false else {
+          return false
+        }
+        self?.imageCache.append(byteLength)
+        return true
+      })
+      .filter({
+        $0.size.width > $0.size.height
+      })
       .subscribe(
         onNext: { [weak self] photo in
-        guard let `self` = self else { return }
-        let newImages = self.images.value + [photo]
-        self.images.accept(newImages)
+          guard let `self` = self else { return }
+          let newImages = self.images.value + [photo]
+          self.images.accept(newImages)
         },
         onDisposed: {
           print("Completed photo selection")
         }
       )
       .disposed(by: bag)
+    
+    newPhotos
+      .ignoreElements()
+      .subscribe(onCompleted: { [weak self] in
+        self?.updateNavigationIcon()
+      })
+      .disposed(by: bag)
+  }
+  
+  private func updateNavigationIcon() {
+    let icon = imagePreview.image?
+                .scaled(CGSize(width: 22, height: 22))
+                .withRenderingMode(.alwaysOriginal)
+    
+    navigationItem.leftBarButtonItem = UIBarButtonItem(image: icon, style: .done, target: nil, action: nil)
   }
   
   func showMessage(_ title: String, description: String? = nil) {
@@ -106,23 +141,5 @@ class MainViewController: UIViewController {
     buttonClear.isEnabled = photos.count > 0
     itemAdd.isEnabled = photos.count < 6
     title = photos.count > 0 ? "\(photos.count) photos" : "Collage"
-  }
-}
-
-extension UIViewController {
-  func alert(_ title: String, description: String? = nil) -> Completable {
-    return Completable.create { [weak self] completable in
-      let alert = UIAlertController(title: title, message: description, preferredStyle: .alert)
-      alert.addAction(
-        UIAlertAction(title: "Close", style: .default, handler: { _ in
-          completable(.completed)
-        })
-      )
-      self?.present(alert, animated: true, completion: nil)
-      
-      return Disposables.create {
-        self?.dismiss(animated: true, completion: nil)
-      }
-    }
   }
 }
