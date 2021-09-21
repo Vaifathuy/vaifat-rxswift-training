@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1632123984599
+updated: 1632212016664
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -219,10 +219,6 @@ Single will emit just _once_ either a _`success(value)`_ or _`error(error)`_ eve
 > A Completable will only emit a _`completed`_ or _`error(error)`_ event. It will not emit any values.
 
 > <> It is useful when you only care that an operation completed successfully or failed, such as a file write.
-
-```swift
-Add your code block here
-```
 
 ### **`Maybe`**:
 A Maybe is a mashup of a Single and Completable. It can either emit a _`success(value)`_, _`completed`_ or _`error(error)`_. 
@@ -563,3 +559,431 @@ Crrent value of relay: 2
 ```
 
 > Note: `BehaviorRelay` let you directly access their current value through `.value` property.
+---
+
+# **`</> Operators`**
+Operators are the building blocks of Rx, which you can use to transform, process, and react to events emitted by observables.
+
+## **`Filtering Operators`**
+## **Ignoring operators**: 
+### With _`ignoreElements`_ operator:
+It will ignore all next events and only allow stop events, such as completed or error events.
+
+![](/assets/images/2021-09-21-09-53-05.png)
+
+Example:
+```swift
+let strikes = PublishSubject<String>()
+let disposeBag = DisposeBag()
+
+strikes
+    .ignoreElements()
+    .subscribe { _ in
+      print("You're out!")
+    }
+    .disposed(by: disposeBag)
+    
+strikes.onNext("X")
+strikes.onNext("X")
+strikes.onNext("X")
+
+strkes.onCompleted()
+```
+
+Result:
+```swift
+You're out!
+```
+
+### With _`elementAt`_ operator:
+We can take a specific index of element we want to receive and ignore everything else.
+
+![](/assets/images/2021-09-21-10-08-59.png)
+
+Example:
+```swift
+let strikes = PublishSubject<String>()
+let disposeBag = DisposeBag()
+
+strikes
+    .elementAt(2)
+    .subscribe(onNext: { _ in
+      print("You're out!")
+    })
+    .disposed(by: disposeBag)
+
+strikes.onNext("X")
+strikes.onNext("X")
+strikes.onNext("X")
+```
+
+Result:
+```swift
+You're out!
+```
+
+Note:
+> An interesting fact about _`element(at:)`_. As soon as an element is emitted at the provided index, the subscription is _`terminated`_.
+
+### With _`filter`_ operator:
+We can apply a conditional constraint to the emitted elements.
+
+![](/assets/images/2021-09-21-10-17-56.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of(1, 2, 3, 4, 5, 6)
+    .filter { $0.isMultiple(of: 2) }
+    .subscribe(onNext: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+2
+4
+6
+```
+
+## **Skipping operators**:
+### With _`skip`_ operator:
+It let you ignore the first _n_ elements of the emitted elements, where _n_ is the number you pass as its parameter.
+
+![](/assets/images/2021-09-21-10-51-02.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of("A", "B", "C", "D", "E", "F")
+    .skip(3)
+    .subscribe(onNext: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+D
+E
+F
+```
+
+### With _`skipWhile`_ operator:
+Unlike filter, _`skipWhile`_ only skips up until something is not skipped, and then it lets everything else through from that point on.
+
+- return `true` will cause the element to be skipped
+- return `false` will let it through. 
+
+![](/assets/images/2021-09-21-11-04-31.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of(2, 2, 3, 4, 4)
+    // 2
+    .skipWhile { $0.isMultiple(of: 2) }
+    .subscribe(onNext: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+3
+4
+4
+```
+
+### With _`skipUntil`_ operator:
+It skips elements from the source observable - the observable we're subscribing to - until some other trigger observable emits.
+
+![](/assets/images/2021-09-21-11-16-01.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+let subject = PublishSubject<String>()
+let trigger = PublishSubject<String>()
+
+subject
+    .skipUntil(trigger)
+    .subscribe(onNext: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+
+subject.onNext("A")
+subject.onNext("B")
+
+trigger.onNext("X")
+subject.onNext("C")
+```
+
+Result:
+```swift
+C
+```
+## **Taking operators**: 
+### With _`take`_ operator:
+It takes the first _n_ elements, where _n_ is the number you pass as its parameter.
+
+![](/assets/images/2021-09-21-11-23-00.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of(1, 2, 3, 4, 5, 6)
+    .take(3)
+    .subscribe(onNext: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+1
+2
+3
+```
+
+### With _`takeWhile`_ operator:
+It works similarly to skipWhile, except we're taking instead of skipping.
+
+![](/assets/images/2021-09-21-11-26-00.png)
+
+> `enumerated()` operator helps extract the index of the element being emitted.
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of(2, 2, 4, 4, 6, 6)
+    .enumerated()
+    .takeWhile { index, integer in
+      integer.isMultiple(of: 2) && index < 3
+    }
+    .map(\.element)
+    .subscribe(onNext: {
+      print($0)
+    })
+    .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+2
+2
+4
+```
+
+### With _`takeUntil`_ operator:
+It will take elements until the predicate is met. It also takes a _behavior_ argument for its first parameter that specifies if you want to include or exclude the last element matching the predictate.
+
+![](/assets/images/2021-09-21-11-34-50.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of(1, 2, 3, 4, 5)
+    .takeUntil(.inclusive) { $0.isMultiple(of: 4) }
+    .subscribe(onNext: {
+      print($0) 
+    })
+  .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+// takeUntil(.inclusive)
+1
+2
+3
+4
+
+// takeUntil.(.exclusive)
+1
+2
+3
+```
+
+> _`takeUntil`_ also works with trigger observable.
+
+![](/assets/images/2021-09-21-11-42-02.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+let subject = PublishSubject<String>()
+let trigger = PublishSubject<String>()
+
+subject
+    .takeUntil(trigger)
+    .subscribe(onNext: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+
+subject.onNext("1")
+subject.onNext("2")
+
+trigger.onNext("X")
+subject.onNext("3")
+```
+
+Result:
+```swift
+1
+2
+```
+
+## **Distinct operators**:
+### With _`distinctUntilChanged`_ operator:
+It prevents duplicate contiguous items from getting through, but only those right next to each other.
+
+![](/assets/images/2021-09-21-13-52-11.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of("A", "A", "B", "B", "A")
+    .distinctUntilChanged()
+    .subscribe(onNext: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+A
+B
+A
+```
+
+> _`distinctUntilChanged(_:)`_ operator let us provide our own custom equatable logic. We must pass a comparer as a paramerter.
+
+![](/assets/images/2021-09-21-13-58-48.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+let formatter = NumberFormatter()
+formatter.numberStyle = .spellOut
+
+Observable<NSNumber>.of(10, 110, 20, 200, 210, 310)
+    .distinctUntilChanged { a, b in
+      guard
+        let aWords = formatter
+          .string(from: a)?
+          .components(separatedBy: " "),
+        let bWords = formatter
+          .string(from: b)?
+          .components(separatedBy: " ")
+        else {
+          return false
+      }
+
+      var containsMatch = false
+      for aWord in aWords where bWords.contains(aWord) {
+        containsMatch = true
+        break
+      }
+      return containsMatch
+    }
+    .subscribe(onNext: {
+      print($0)
+    })
+    .disposed(by: disposeBag)
+```
+
+Result
+```swift
+10
+20
+200
+
+example(of: "Challenge 1") {
+    let disposeBag = DisposeBag()
+    
+    let contacts = [
+        "603-555-1212": "Florent",
+        "212-555-1212": "Shai",
+        "408-555-1212": "Marin",
+        "617-555-1212": "Scott"
+    ]
+    
+    func phoneNumber(from inputs: [Int]) -> String {
+        var phone = inputs.map(String.init).joined()
+        
+        phone.insert("-", at: phone.index(
+                        phone.startIndex,
+                        offsetBy: 3)
+        )
+        
+        phone.insert("-", at: phone.index(
+                        phone.startIndex,
+                        offsetBy: 7)
+        )
+        
+        return phone
+    }
+    
+    let input = PublishSubject<Int>()
+    
+    // Add your code here
+    input
+        .skipWhile({ $0 == 0})
+        .filter({ $0 < 10 })
+        .take(10)
+        .toArray()
+        .subscribe { inputs in
+            let phone = phoneNumber(from: inputs)
+            
+            if let contact = contacts[phone] {
+                print("Dailing \(contact) (\(phone)...")
+            }else {
+                print("Contact not found")
+            }
+        } onError: { error in
+            print(error.localizedDescription)
+        }
+        .disposed(by: disposeBag)
+    // Add your code here
+    
+    input.onNext(0)
+    input.onNext(603)
+    
+    input.onNext(2)
+    input.onNext(1)
+    
+    // Confirm that 7 results in "Contact not found",
+    // and then change to 2 and confirm that Shai is found
+    input.onNext(7)
+    
+    "5551212".forEach {
+        if let number = (Int("\($0)")) {
+            input.onNext(number)
+        }
+    }
+    
+    input.onNext(9)
+    
+    // 0, 603, 2, 1, 7, 5, 5, 5, 1, 2, 1, 2, 9
+}
+
+```
