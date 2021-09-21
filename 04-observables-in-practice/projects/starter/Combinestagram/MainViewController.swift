@@ -96,9 +96,9 @@ class MainViewController: UIViewController {
   }
   
   func showMessage(_ title: String, description: String? = nil) {
-    let alert = UIAlertController(title: title, message: description, preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "Close", style: .default, handler: { [weak self] _ in self?.dismiss(animated: true, completion: nil)}))
-    present(alert, animated: true, completion: nil)
+    alert(title, description: description)
+      .subscribe()
+      .disposed(by: bag)
   }
   
   private func updateUI(photos: [UIImage]) {
@@ -110,5 +110,19 @@ class MainViewController: UIViewController {
 }
 
 extension UIViewController {
-//  func showMessage(_ title: String, description: String? = nil) {}
+  func alert(_ title: String, description: String? = nil) -> Completable {
+    return Completable.create { [weak self] completable in
+      let alert = UIAlertController(title: title, message: description, preferredStyle: .alert)
+      alert.addAction(
+        UIAlertAction(title: "Close", style: .default, handler: { _ in
+          completable(.completed)
+        })
+      )
+      self?.present(alert, animated: true, completion: nil)
+      
+      return Disposables.create {
+        self?.dismiss(animated: true, completion: nil)
+      }
+    }
+  }
 }
