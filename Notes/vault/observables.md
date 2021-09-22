@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1632213929499
+updated: 1632293204505
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -921,3 +921,6 @@ Result
 ## **Other operators**:
 ### With _`share()`_ operator:
 It ensures that an observable does not produce a new subscription every time a new observer subscribes to it. It'd rather shares an existing subscription to all the observers.
+
+### With _`throttle(_:scheduler:)`_ operator:
+The operator filters any elements followed by another element within the specified time interval. It makes sure that _no two elements_ are emitted in less then dueTime.

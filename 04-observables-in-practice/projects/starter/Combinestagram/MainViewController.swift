@@ -49,6 +49,8 @@ class MainViewController: UIViewController {
     super.viewDidLoad()
     
     images
+      .share()
+      .throttle(.milliseconds(500), scheduler: MainScheduler.instance)
       .subscribe(onNext: { [weak imagePreview] photos in
         guard let preview = imagePreview else { return }
         preview.image = photos.collage(size: preview.frame.size)
@@ -56,6 +58,7 @@ class MainViewController: UIViewController {
       .disposed(by: bag)
     
     images
+      .share()
       .subscribe(onNext: { [weak self] photos in
         self?.updateUI(photos: photos)
       })
