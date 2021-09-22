@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1632293204505
+updated: 1632302242046
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -924,3 +924,181 @@ It ensures that an observable does not produce a new subscription every time a n
 
 ### With _`throttle(_:scheduler:)`_ operator:
 The operator filters any elements followed by another element within the specified time interval. It makes sure that _no two elements_ are emitted in less then dueTime.
+
+---
+## **`Transforming Operators`**
+### With _`toArray()`_ operator:
+It _converts_ an observable _sequence of elements_ into _an array_ of those elements once the observable completes and _return a Single_.
+
+![](/assets/images/2021-09-22-14-29-59.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of("A", "B", "C")
+    .toArray()
+    .subscribe(onSuccess: {
+      print($0) 
+    })
+    .disposed(by: disposeBag)
+```
+
+Result
+```swift
+["A", "B", "C"]
+```
+
+### With _`map`_ operator:
+Like _map_ in Swift's standard library, excepts that this operator works with observables, it converts the elements emitted by observables.
+
+![](/assets/images/2021-09-22-14-47-11.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of(1, 2, 3, 4, 5, 6)
+  .enumerated()
+  .map { index, integer in
+    index > 2 ? integer * 2 : integer
+  }
+  .subscribe(onNext: {
+    print($0)
+  })
+  .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+1
+2
+3
+8
+10
+12
+```
+
+### With _`compactMap`_ operator:
+The operator is a combination of the _map_ and _filter_ operators that specifically filters out _`nil`_ values. It helps retrieve unwrapped value and filter out nil.
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+Observable.of("To", "be", nil, "or", "not", "to", "be", nil)
+    .compactMap { $0 }
+    .toArray()
+    .map { $0.joined(separator: " ") }
+    .subscribe(onSuccess: {
+      print($0)
+    })
+    .disposed(by: disposeBag)
+```
+
+Result:
+```swift
+To be or not to be
+```
+
+### With _`flatMap`_ operator:
+The operator projects and transforms an observable value of an observable, and then flattens it down to a target observable.
+
+![](/assets/images/2021-09-22-15-14-13.png)
+
+Example: 
+```swift
+struct Student {
+  let score: BehaviorSubject<Int>
+}
+
+let disposeBag = DisposeBag()
+
+let laura = Student(score: BehaviorSubject(value: 80))
+let charlotte = Student(score: BehaviorSubject(value: 90))
+
+let student = PublishSubject<Student>()
+
+student
+  .flatMap {
+    $0.score 
+  }
+  .subscribe(onNext: {
+    print($0)
+  })
+  .disposed(by: disposeBag)
+
+// 1
+student.onNext(laura)
+
+// 2: Change laura's score
+laura.score.onNext(85)
+
+// 3
+student.onNext(charlotte)
+
+// 4
+charlotte.score.onNext(100)
+```
+
+Result
+```swift
+// 1
+80
+// 2
+85
+// 3
+90
+// 4
+100
+```
+
+### With _`flatMapLatest`_ operator:
+Similar to flatMap, it projects and transforms changes from the most recent observable and unsubscribes to previous observables.
+
+![](/assets/images/2021-09-22-15-36-40.png)
+
+Example:
+```swift
+let disposeBag = DisposeBag()
+
+let laura = Student(score: BehaviorSubject(value: 80))
+let charlotte = Student(score: BehaviorSubject(value: 90))
+
+let student = PublishSubject<Student>()
+
+student
+  .flatMapLatest {
+    $0.score
+  }
+  .subscribe(onNext: {
+    print($0)
+  })
+  .disposed(by: disposeBag)
+
+student.onNext(laura)
+laura.score.onNext(85)
+student.onNext(charlotte)
+
+// 1
+laura.score.onNext(95)
+charlotte.score.onNext(100)
+```
+
+Result
+```swift
+80
+85
+90
+100
+```
+
+### With _`materialize`_ operator:
+Use the operator to wrap each event emitted by an observable in an observable.
+
+![](/assets/images/2021-09-22-16-14-50.png)
+
+### With _`dematerialize`_ operator:
+The operator converts a materialized observable back into its original form.
+
+![](/assets/images/2021-09-22-16-17-18.png)
