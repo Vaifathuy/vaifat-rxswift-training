@@ -1,15 +1,15 @@
 /// Copyright (c) 2020 Razeware LLC
-/// 
+///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
 /// in the Software without restriction, including without limitation the rights
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in
 /// all copies or substantial portions of the Software.
-/// 
+///
 /// Notwithstanding the foregoing, you may not use, copy, modify, merge, publish,
 /// distribute, sublicense, create a derivative work, and/or sell copies of the
 /// Software in any work that is designed, intended, or marketed for pedagogical or
@@ -17,7 +17,7 @@
 /// or information technology.  Permission for such use, copying, modification,
 /// merger, publication, distribution, sublicensing, creation of derivative works,
 /// or sale is expressly withheld.
-/// 
+///
 /// This project and source code may use libraries or frameworks that are
 /// released under various Open-Source licenses. Use of those libraries and
 /// frameworks are governed by their own individual licenses.
@@ -40,8 +40,10 @@ class ActivityController: UITableViewController {
 
   private let eventsFileURL = cachedFileURL("events.json")
   private let modifiedFileURL = cachedFileURL("modified.txt")
+  
   private let events = BehaviorRelay<[Event]>(value: [])
   private let lastModified = BehaviorRelay<String?>(value: nil)
+  
   private let bag = DisposeBag()
 
   override func viewDidLoad() {
@@ -78,18 +80,22 @@ class ActivityController: UITableViewController {
 
   func fetchEvents(repo: String) {
     let response = Observable.from([repo])
-    
-    response
       .map { urlString -> URL in
         return URL(string: "https://api.github.com/repos/\(urlString)/events")!
       }
-      .map { url -> URLRequest in
-        return URLRequest(url: url)
+      .map { [weak self] url -> URLRequest in
+        var request = URLRequest(url: url)
+        if let modifiedHeader = self?.lastModified.value {
+          request.addValue(modifiedHeader, forHTTPHeaderField: "Last-Modified")
+        }
+        return request
       }
       .flatMap { request -> Observable<(response: HTTPURLResponse, data: Data)> in
         return URLSession.shared.rx.response(request: request)
       }
       .share(replay: 1)
+      
+    response
       .filter { response, _ in
         return 200..<300 ~= response.statusCode
       }
@@ -98,6 +104,23 @@ class ActivityController: UITableViewController {
       }
       .subscribe(onNext: { [weak self] newEvents in
         self?.processEvents(newEvents)
+      })
+      .disposed(by: bag)
+    
+    response
+      .filter { response, _ in
+        return 200..<400 ~= response.statusCode
+      }
+      .flatMap { response, _ -> Observable<String> in
+        guard let value = response.allHeaderFields["Last-Modified"] as? String else {
+          return Observable.empty()
+        }
+        return Observable.just(value)
+      }
+      .subscribe(onNext: { [weak self] modifiedHeader in
+        guard let `self` = self else { return }
+        self.lastModified.accept(modifiedHeader)
+        try? modifiedHeader.write(to: self.modifiedFileURL, atomically: true, encoding: .utf8)
       })
       .disposed(by: bag)
   }
