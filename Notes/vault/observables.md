@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1632302242046
+updated: 1632996248339
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -1102,3 +1102,345 @@ Use the operator to wrap each event emitted by an observable in an observable.
 The operator converts a materialized observable back into its original form.
 
 ![](/assets/images/2021-09-22-16-17-18.png)
+
+---
+## **`Combining Operators`**
+### With _`startWith`_ operator:
+The operator guarantee that an observer receives an initial value.
+
+![](/assets/images/2021-09-29-10-17-42.png)
+
+Example:
+```swift
+let numbers = Observable.of(2, 3, 4)
+
+let observable = numbers.startWith(1)
+_ = observable.subscribe(onNext: { value in
+  print(value)
+})
+```
+
+Result:
+```swift
+1
+2
+3
+4
+```
+
+### With _`concat`_ operator:
+The operator chains two sequences.
+
+![](/assets/images/2021-09-29-10-25-03.png)
+
+Static function: Observable.concat(_ :)
+
+Example:
+```swift
+let first = Observable.of(1, 2, 3)
+let second = Observable.of(4, 5, 6)
+
+let observable = Observable.concat([first, second])
+
+observable.subscribe(onNext: { value in
+    print(value)
+})
+```
+
+Instance function: .concat(_ :)
+
+Example:
+```swift
+let germanCities = Observable.of("Berlin", "Münich",
+"Frankfurt")
+  let spanishCities = Observable.of("Madrid", "Barcelona",
+"Valencia")
+
+let observable = germanCities.concat(spanishCities)
+_ = observable.subscribe(onNext: { value in
+    print(value)
+})
+```
+
+Result:
+```swift
+Berlin,
+Münich,
+Frankfurt,
+Madrid,
+Barcelona,
+Valencia
+```
+
+> `Note:` Observable sequences are strongly typed. You can only concatenate sequences whose elements are of the same type!
+
+### With _`concatMap(_:)`_ operator:
+Closely related to flatMap(_:), the operator concatenates two observable sequences and relays the values each sequence emits into the resulting observable sequence and gurantee sequential order.
+
+Example:
+```swift
+let sequences = [
+    "German cities": Observable.of("Berlin", "Münich", "Frankfurt"),
+    "Spanish cities": Observable.of("Madrid", "Barcelona", "Valencia")
+]
+
+let observable = Observable.of("German cities", "Spanish cities")
+  .concatMap { country in sequences[country] ?? .empty() }
+
+_ = observable.subscribe(onNext: { string in
+      print(string)
+})
+```
+
+### With _`merge`_ operator:
+The merge operator subscribes to each of the sequences it receives and emits the elements as soon as they arrive - there is no predefined order.
+
+![](/assets/images/2021-09-30-10-29-30.png)
+
+Example:
+```swift
+let left = PublishSubject<String>()
+let right = PublishSubject<String>()
+
+let source = Observable.of(left.asObservable(), right.asObservable())
+let observable = source.merge()
+
+_ = observable.subscribe(onNext: { value in
+  print(value)
+})
+
+var leftValues = ["Berlin", "Munich", "Frankfurt"]
+var rightValues = ["Madrid", "Barcelona", "Valencia"]
+repeat {
+  switch Bool.random() {
+    case true where !leftValues.isEmpty:
+        left.onNext("Left:  " + leftValues.removeFirst())
+    case false where !rightValues.isEmpty:
+        right.onNext("Right: " + rightValues.removeFirst())
+    default:
+        break
+    }
+} while !leftValues.isEmpty || !rightValues.isEmpty
+
+left.onCompleted()
+right.onCompleted()
+
+```
+
+Result
+```swift
+Right: Madrid
+Left:  Berlin
+Right: Barcelona
+Right: Valencia
+Left:  Munich
+Left:  Frankfürt
+```
+
+> When and how .merge() completes ?
+- merge() completes after its source sequence completes and all inner sequences have completed.
+
+- If any of the sequences emit and error, the merge() observable immediately relay the error, then terminates.
+
+### With _`combineLatest`_ operator:
+The operator combines _`values`_ from serveral observable sequences,whose types could possibly be the same or different, and it then return an observable whose type is the closure return type.
+
+![](/assets/images/2021-09-30-11-27-52.png)
+
+Example:
+```swift
+let left = PublishSubject<String>()
+let right = PublishSubject<String>()
+
+let observable = Observable.combineLatest(left, right) {
+  lastLeft, lastRight in
+  "\(lastLeft) \(lastRight)"
+}
+
+_ = observable.subscribe(onNext: { value in
+  print(value)
+})
+
+print("> Sending a value to Left")
+left.onNext("Hello,")
+
+print("> Sending a value to Right")
+right.onNext("world")
+
+print("> Sending another value to Right")
+right.onNext("RxSwift")
+
+print("> Sending another value to Left")
+left.onNext("Have a good day,")
+
+left.onCompleted()
+right.onCompleted()
+```
+
+> Note: The operators waits for all its observables to emit one element before starting to call the closure we specify. 
+
+Example 2:
+```swift
+let choice: Observable<DateFormatter.Style> =
+Observable.of(.short, .long)
+
+let dates = Observable.of(Date())
+
+let observable = Observable.combineLatest(choice, dates) {
+    format, when -> String in
+    let formatter = DateFormatter()
+    formatter.dateStyle = format
+    return formatter.string(from: when)
+}
+
+_ = observable.subscribe(onNext: { value in
+    print(value)
+})
+
+// This example demonstrates automatic updates of on-screen values when the user settings change. Think about all the manual updates you’ll remove with such patterns!
+```
+> Note: combineLatest(_:) operator completes only when the last of its inner sequences completes.
+
+### With _`zip`_ operator:
+What makes zip operator different from the combineLatest is that zip emits values by pariing each _`next value`_ of each observable at the same logical position.
+
+![](/assets/images/2021-09-30-16-17-53.png)
+
+Example:
+```swift
+enum Weather {
+  case cloudy
+  case sunny 
+}
+
+let left: Observable<Weather> = Observable.of(.sunny, .cloudy, .cloudy, .sunny)
+let right = Observable.of("Lisbon", "Copenhagen", "London", "Madrid", "Vienna")
+
+let observable = Observable.zip(left, right) { weather, city in
+    return "It's \(weather) in \(city)"
+}
+
+_ = observable.subscribe(onNext: { value in
+  print(value)
+})
+```
+
+Result:
+```swift
+It's sunny in Lisbon
+It's cloudy in Copenhagen
+It's cloudy in London
+It's sunny in Madrid
+```
+---
+
+## **`Triggers`**
+### With _`withLatestFrom(_:)`_ operator:
+The operator emtis the latest values of an observable but only when a particular triggers occurs.
+
+![](/assets/images/2021-09-30-16-37-31.png)
+
+Example:
+```swift
+let button = PublishSubject<Void>()
+let textField = PublishSubject<String>()
+
+let observable = button.withLatestFrom(textField)
+_ = observable.subscribe(onNext: { value in
+  print(value)
+})
+
+textField.onNext("Par")
+textField.onNext("Pari")
+textField.onNext("Paris")
+button.onNext(())
+button.onNext(())
+```
+
+Result:
+```swift
+Paris
+Paris
+```
+
+### With _`sample(_:)`_ operator:
+Like _withLatestFrom(_:)_ operator, the operator emits the latest value from the other observable, but only if it arrived since the last trigger. If no new data arrived, the operator won't emit anything.
+
+![](/assets/images/2021-09-30-16-46-46.png)
+
+Example:
+```swift
+let button = PublishSubject<Void>()
+let textField = PublishSubject<String>()
+
+let observable = textField.sample(button)
+```
+
+## **`Switches`**
+### With _`amb(_:)`_ operator:
+The operator subscribes to each observables. It waits for any of them to emit an element, then unsubscribes from the other one. After that, it only relyas elements from the first active observable.
+
+![](/assets/images/2021-09-30-16-58-53.png)
+
+Example: 
+```swift
+let left = PublishSubject<String>()
+let right = PublishSubject<String>()
+
+let observable = left.amb(right)
+_ = observable.subscribe(onNext: { value in
+  print(value)
+})
+
+left.onNext("Lisbon")
+right.onNext("Copenhagen")
+left.onNext("London")
+left.onNext("Madrid")
+right.onNext("Vienna")
+left.onCompleted()
+right.onCompleted()
+```
+
+### With _`switchLatest()`_ operator:
+
+
+![](/assets/images/2021-09-30-17-01-03.png)
+
+Example:
+```swift
+let one = PublishSubject<String>()
+let two = PublishSubject<String>()
+let three = PublishSubject<String>()
+let source = PublishSubject<Observable<String>>()
+
+let observable = source.switchLatest()
+let disposable = observable.subscribe(onNext: { value in
+  print(value)
+})
+
+source.onNext(one)
+one.onNext("Some text from sequence one")
+two.onNext("Some text from sequence two")
+
+source.onNext(two)
+two.onNext("More text from sequence two")
+one.onNext("and also from sequence one")
+
+source.onNext(three)
+two.onNext("Why don't you see me?")
+one.onNext("I'm alone, help me")
+three.onNext("Hey it's three. I win.")
+
+source.onNext(one)
+one.onNext("Nope. It's me, one!")
+
+disposable.dispose()
+```
+
+Result:
+```swift
+Some text from sequence one
+More text from sequence two
+Hey it's three. I win.
+Nope. It's me, one!
+```
