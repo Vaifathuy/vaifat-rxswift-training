@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1633316348520
+updated: 1633339918549
 created: 1630999552309
 ---
 # **`</> Observables`**
