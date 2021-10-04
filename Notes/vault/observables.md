@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1632996248339
+updated: 1633316348520
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -1243,7 +1243,7 @@ Left:  Frankfürt
 - If any of the sequences emit and error, the merge() observable immediately relay the error, then terminates.
 
 ### With _`combineLatest`_ operator:
-The operator combines _`values`_ from serveral observable sequences,whose types could possibly be the same or different, and it then return an observable whose type is the closure return type.
+The operator combines _`values`_ from serveral observable sequences, whose types could possibly be the same or different, and it then returns an observable whose type is the closure return type.
 
 ![](/assets/images/2021-09-30-11-27-52.png)
 
@@ -1364,7 +1364,7 @@ Paris
 ```
 
 ### With _`sample(_:)`_ operator:
-Like _withLatestFrom(_:)_ operator, the operator emits the latest value from the other observable, but only if it arrived since the last trigger. If no new data arrived, the operator won't emit anything.
+Like _withLatestFrom(_:) operator, the operator emits the latest value from the other observable, but only if it arrived since the last trigger. If no new data arrived, the operator won't emit anything.
 
 ![](/assets/images/2021-09-30-16-46-46.png)
 
@@ -1402,7 +1402,7 @@ right.onCompleted()
 ```
 
 ### With _`switchLatest()`_ operator:
-
+The operator only emits the latest value of the most recently active observable among others.
 
 ![](/assets/images/2021-09-30-17-01-03.png)
 
@@ -1443,4 +1443,47 @@ Some text from sequence one
 More text from sequence two
 Hey it's three. I win.
 Nope. It's me, one!
+```
+---
+## **`Combining element within a sequence`**
+### With _`reduce(_:_:)`_ operator:
+The operator combine each element within a observable sequence with specified criteria set up in its closure.
+
+![](/assets/images/2021-10-04-09-51-23.png)
+
+Example:
+```swift
+let source = Observable.of(1, 3, 5, 7, 9)
+
+let observable = source.reduce(0) { summary, newValue in
+  return summary + newValue
+}
+
+// The operator “accumulates” a summary value. It starts with the initial value you provide (in this example, you start with 0). Each time the source observable emits an item, reduce(_:_:) calls your closure to produce a new summary. When the source observable completes, reduce(_:_:) emits the summary value, then completes.
+```
+
+> `Note`: reduce(_: _:) produces its summary value only when the source observable completes.
+
+### With _`scan(_:accumulator:)`_ operator:
+Closely related to reduce(), the operator invokes the closure each time the source observable emits an element. It passes the running value along with the new element, and the closure returns the new accumulated value.
+
+![](/assets/images/2021-10-04-09-58-10.png)
+
+Example:
+```swift
+let source = Observable.of(1, 3, 5, 7, 9)
+
+let observable = source.scan(0, accumulator: +)
+_ = observable.subscribe(onNext: { value in
+  print(value)
+})
+```
+
+Result:
+```swift
+1
+4
+9
+16
+25
 ```
