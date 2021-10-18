@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1633339918549
+updated: 1634551212469
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -1487,3 +1487,17 @@ Result:
 16
 25
 ```
+---
+# **`</> Time-based Operators`**
+## **`Buffering operators`**
+
+The operator will either replay past elements to new subscribers, or buffer them and deliver them in bursts. They allow you to control how and when past and new elements get delivered.
+
+### With _`.replay()`_ operator:
+This operator creates a new sequence which records the last replayedElements emitted by the source observable. Every time a new observer subscribes, it immediately receives the buffered elements, if any, and keeps receiving any new element like a normal observer does.
+
+### With _`.delaySubscription(_:scheduler:)`_ operator:
+It delay the time a subscriber starts receiving elements from its subscription.
+
+### With _`.delay(_:scheduler:)`_ operator:
+The operator delays the receiption of the emitted items. You simply see the items arrive with a delay.
