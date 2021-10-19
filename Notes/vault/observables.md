@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1634551212469
+updated: 1634616464357
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -1501,3 +1501,6 @@ It delay the time a subscriber starts receiving elements from its subscription.
 
 ### With _`.delay(_:scheduler:)`_ operator:
 The operator delays the receiption of the emitted items. You simply see the items arrive with a delay.
+
+### With _`.timeout()`_ operator:
+The operator semantically distinguish an acutal timer from a timeout condition. Therefore, when a timeout operator fires, it emits an RxError.TimeoutError error event; if not caught, it terminates the sequence.
