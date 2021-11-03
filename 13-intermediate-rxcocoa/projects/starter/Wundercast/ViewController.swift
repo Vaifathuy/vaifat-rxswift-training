@@ -61,11 +61,19 @@ class ViewController: UIViewController {
             .map { self.searchCityName.text ?? "" }
             .filter { !$0.isEmpty }
         
-        // Location
-        let geoSearch = geoLocationButton.rx.tap
+        let mapInput = mapView.rx.regionDidChangeAnimated
+            .skip(1)
+            .map { _ in
+                CLLocation(latitude: self.mapView.centerCoordinate.latitude, longitude: self.mapView.centerCoordinate.longitude)
+            }
+        
+        let geoInput = geoLocationButton.rx.tap
             .flatMapLatest { _ in
                 self.locationManager.rx.getCurrentLocation()
             }
+        
+        // Location
+        let geoSearch = Observable.merge(geoInput, mapInput)
             .flatMapLatest { location in
                 ApiController.shared
                     .currentWeather(at: location.coordinate)
@@ -89,7 +97,8 @@ class ViewController: UIViewController {
         // Activity Indicator
         let running = Observable.merge(
             searchInput.map { _ in true },
-            geoLocationButton.rx.tap.map { _ in true },
+            geoInput.map { _ in true },
+            mapInput.map { _ in true },
             search.map { _ in false }.asObservable()
         )
             .startWith(true)
@@ -132,6 +141,23 @@ class ViewController: UIViewController {
         search.map(\.cityName)
             .drive(cityNameLabel.rx.text)
             .disposed(by: bag)
+        
+        // Map
+        mapButton.rx.tap
+            .subscribe(onNext: {
+                self.searchCityName.isEnabled.toggle()
+                self.mapView.isHidden.toggle()
+            })
+            .disposed(by: bag)
+        
+        mapView.rx
+            .setDelegate(self)
+            .disposed(by: bag)
+        
+        search
+            .map { $0.overlay() }
+            .drive(mapView.rx.overlay)
+            .disposed(by: bag)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -164,5 +190,12 @@ class ViewController: UIViewController {
         humidityLabel.textColor = UIColor.cream
         iconLabel.textColor = UIColor.cream
         cityNameLabel.textColor = UIColor.cream
+    }
+}
+
+extension ViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        guard let overlay = overlay as? ApiController.Weather.Overlay else { return MKOverlayRenderer() }
+        return ApiController.Weather.OverlayView(overlay: overlay, overlayIcon: overlay.icon)
     }
 }
