@@ -94,7 +94,25 @@ class ViewController: UIViewController {
                 .map { [weak self] _ in self?.searchCityName.text ?? "" }
                 .filter { !$0.isEmpty }
         
-//        let maxAttempts = 4
+        
+        let maxAttempts = 4
+        let retryHandler: (Observable<Error>) -> Observable<Int> = { e in
+            return e.enumerated().flatMap { attempt, error -> Observable<Int> in
+                return e.enumerated().flatMap { attempt, error -> Observable<Int> in
+                    if attempt >= maxAttempts - 1 {
+                        return Observable.error(error)
+                    }else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
+                        return ApiController.shared.apiKey
+                            .filter { !$0.isEmpty }
+                            .map { _ in 1 }
+                    }
+                    print("== retrying after \(attempt + 1) seconds ==")
+                    return Observable<Int>.timer(.seconds(attempt + 1), scheduler: MainScheduler.instance)
+                        .take(1)
+                }
+            }
+            
+        }
         
         let textSearch = searchInput.flatMap { text in
             return ApiController.shared.currentWeather(city: text)
@@ -109,20 +127,10 @@ class ViewController: UIViewController {
                         }
                     }
                 )
-                .catchErrorJustReturn(self.cache[text] ?? .empty)
-//                .retryWhen { e in
-//                    return e.enumerated().flatMap { attempt, error -> Observable<Int> in
-//                        if attempt >= maxAttempts - 1 {
-//                            return Observable.error(error)
-//                        }
-//                        print("== retrying after \(attempt + 1) seconds ==")
-//                        return Observable<Int>.timer(.seconds(attempt + 1), scheduler: MainScheduler.instance)
-//                            .take(1)
-//                    }
-//                }
-//                .catchError { error in
-//                    return Observable.just(self.cache[text] ?? .empty)
-//                }
+                .retryWhen(retryHandler)
+                .catchError { error in
+                    return Observable.just(self.cache[text] ?? .empty)
+                }
         }
         
         let search = Observable.merge(geoSearch, textSearch)
@@ -173,10 +181,13 @@ class ViewController: UIViewController {
             return
         }
         switch e {
-            case .cityNotFound:
-                InfoView.showIn(viewController: self, message: "City Name is invalid")
-            case .serverFailure:
-                InfoView.showIn(viewController: self, message: "Server error")
+        case .cityNotFound:
+            InfoView.showIn(viewController: self, message: "City Name is invalid")
+        case .serverFailure:
+            InfoView.showIn(viewController: self, message: "Server error")
+        case .invalidKey:
+            InfoView.showIn(viewController: self, message: "Key in invalid")
+            
         }
     }
     
