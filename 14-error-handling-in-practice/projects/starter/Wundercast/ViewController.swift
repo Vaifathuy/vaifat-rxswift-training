@@ -98,20 +98,22 @@ class ViewController: UIViewController {
         let maxAttempts = 4
         let retryHandler: (Observable<Error>) -> Observable<Int> = { e in
             return e.enumerated().flatMap { attempt, error -> Observable<Int> in
-                return e.enumerated().flatMap { attempt, error -> Observable<Int> in
-                    if attempt >= maxAttempts - 1 {
-                        return Observable.error(error)
-                    }else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
-                        return ApiController.shared.apiKey
-                            .filter { !$0.isEmpty }
-                            .map { _ in 1 }
-                    }
-                    print("== retrying after \(attempt + 1) seconds ==")
-                    return Observable<Int>.timer(.seconds(attempt + 1), scheduler: MainScheduler.instance)
-                        .take(1)
+                if (error as NSError).code == -1009 {
+                    return RxReachability.shared.status
+                        .filter { $0 == .online }
+                        .map { _ in 1 }
+                }else if attempt >= maxAttempts - 1 {
+                    return Observable.error(error)
+                }else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
+                    return ApiController.shared.apiKey
+                        .filter { !$0.isEmpty }
+                        .map { _ in 1 }
                 }
+                
+                print("== retrying after \(attempt + 1) seconds ==")
+                return Observable<Int>.timer(.seconds(attempt + 1), scheduler: MainScheduler.instance)
+                    .take(1)
             }
-            
         }
         
         let textSearch = searchInput.flatMap { text in
