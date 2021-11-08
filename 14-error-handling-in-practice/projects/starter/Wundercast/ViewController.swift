@@ -61,6 +61,10 @@ class ViewController: UIViewController {
         
         style()
         
+        if RxReachability.shared.startMonitor("apple.com") == false {
+          print("Reachability failed!")
+        }
+        
         keyButton.rx.tap
             .subscribe(onNext: { [weak self] _ in
                 self?.requestKey()
