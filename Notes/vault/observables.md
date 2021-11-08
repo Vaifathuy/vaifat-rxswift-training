@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1634616464357
+updated: 1636360384315
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -1504,3 +1504,100 @@ The operator delays the receiption of the emitted items. You simply see the item
 
 ### With _`.timeout()`_ operator:
 The operator semantically distinguish an acutal timer from a timeout condition. Therefore, when a timeout operator fires, it emits an RxError.TimeoutError error event; if not caught, it terminates the sequence.
+
+---
+# **`</> Schedulers`**
+## **What is a scheduler?**
+A scheduler is a context where a process takes place. This context can be a thread, a dispatch queue or similar entities, or even an operation used inside the _OperationQueueScheduler_.
+
+An example as to how schedulers can be used:
+![](/assets/images/2021-11-08-15-07-30.png)
+
+### With _`subscribeOn`_ operator:
+This operator wraps the `source sequence` in order to run its subscription and unsubscription logic on a specified scheduler.
+
+Example:
+```swift
+
+// Helpers functions
+private func secondsElapsed() -> String {
+  return String(format: "%02i", Int(Date().timeIntervalSince(start).rounded()))
+}
+
+extension ObservableType {
+  func dump() -> Observable<Element> {
+    return self.do(onNext: { element in
+      let threadName = getThreadName()
+      print("\(secondsElapsed())s | [E] \(element) emitted on \(threadName)")
+    })
+  }
+  
+  func dumpingSubscription() -> Disposable {
+    return self.subscribe(onNext: { element in
+      let threadName = getThreadName()
+      print("\(secondsElapsed())s | [S] \(element) received on \(threadName)")
+    })
+  }
+}
+
+
+// Example starts here
+ let globalScheduler = ConcurrentDispatchQueueScheduler(queue:
+DispatchQueue.global())
+
+let bag = DisposeBag()
+
+let fruit = Observable<String>.create { observer in
+    observer.onNext("[apple]")
+    sleep(2)
+    observer.onNext("[pineapple]")
+    sleep(2)
+    observer.onNext("[strawberry]")
+    sleep(2)
+    return Disposables.create()
+}
+
+fruit
+  .subscribeOn(globalScheduler)
+  .dump()
+  .dumpingSubscription()
+  .disposed(by: bag)
+```
+
+Result:
+```swift
+00s | [E] [apple] emitted on Anonymous Thread
+00s | [S] [apple] received on Anonymous Thread
+02s | [E] [pineapple] emitted on Anonymous Thread
+02s | [S] [pineapple] received on Anonymous Thread
+04s | [E] [strawberry] emitted on Anonymous Thread
+04s | [S] [strawberry] received on Anonymous Thread
+```
+
+### With _`observeOn`_ operator:
+This operator changes the scheduler on observation part to a specified scheduler and ensures the subscribers receive the event on that scheduler.
+
+![](/assets/images/2021-11-08-15-30-42.png)
+
+Example:
+```swift
+// ** Codes from example in subscribeOn **
+// ...
+
+fruit
+  .subscribeOn(globalScheduler)
+  .dump()
+  .observeOn(MainScheduler.instance)
+  .dumpingSubscription()
+  .disposed(by: bag)
+```
+
+Result:
+```swift
+00s | [E] [apple] emitted on Anonymous Thread
+00s | [S] [apple] received on Main Thread
+02s | [E] [pineapple] emitted on Anonymous Thread
+02s | [S] [pineapple] received on Main Thread
+04s | [E] [strawberry] emitted on Anonymous Thread
+04s | [S] [strawberry] received on Main Thread
+```
