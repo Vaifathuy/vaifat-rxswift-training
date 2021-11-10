@@ -2,7 +2,7 @@
 id: dI8ZZxMwdC6iOpPdEfaIB
 title: Observables
 desc: ''
-updated: 1636360384315
+updated: 1636512204899
 created: 1630999552309
 ---
 # **`</> Observables`**
@@ -1601,3 +1601,9 @@ Result:
 04s | [E] [strawberry] emitted on Anonymous Thread
 04s | [S] [strawberry] received on Main Thread
 ```
+---
+# **`</> Hot & Cold Observables`**
+
+**`Hot observables`** are those observables that start emitting values even without any observers subscribed to them. 
+
+**`Cold observables`** are ones that start performing side effects upon subscription.
