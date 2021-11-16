@@ -50,8 +50,17 @@ class GifTableViewCell: UITableViewCell {
     
     func downloadAndDisplay(gif url: URL) {
         let request = URLRequest(url: url)
-        #warning("Continue here ...")
         activityIndicator.startAnimating()
+        
+        let s = URLSession.shared.rx.data(request: request)
+            .observeOn(MainScheduler.instance)
+            .subscribe(onNext: { [weak self] imageData in
+                guard let self = self else { return }
+                
+                self.gifImageView.animate(withGIFData: imageData)
+                self.activityIndicator.stopAnimating()
+            })
+        disposable.setDisposable(s)
     }
 }
 
