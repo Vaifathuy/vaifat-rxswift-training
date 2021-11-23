@@ -66,6 +66,7 @@ class PhotosViewController: UICollectionViewController {
     super.viewDidLoad()
     
     let authorized = PHPhotoLibrary.authorized
+      .lane("Photo Library Auth")
       .share()
     
     authorized
