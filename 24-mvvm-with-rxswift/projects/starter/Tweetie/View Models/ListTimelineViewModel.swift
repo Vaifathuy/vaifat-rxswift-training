@@ -40,10 +40,20 @@ import RxCocoa
 class ListTimelineViewModel {
   private let bag = DisposeBag()
   private let fetcher: TimelineFetcher
+  
+  let list: ListIdentifier
+  let account: Driver<TwitterAccount.AccountStatus>
 
   // MARK: - Input
+  var paused: Bool = false {
+    didSet {
+      fetcher.paused.accept(paused)
+    }
+  }
 
   // MARK: - Output
+  private(set) var tweets: Observable<(AnyRealmCollection<Tweet>, RealmChangeset?)>!
+  private(set) var loggedIn: Driver<Bool>!
 
   // MARK: - Init
   init(account: Driver<TwitterAccount.AccountStatus>,
@@ -51,7 +61,15 @@ class ListTimelineViewModel {
        apiType: TwitterAPIProtocol.Type = TwitterAPI.self) {
 
     // fetch and store tweets
+    self.account = account
+    self.list = list
     fetcher = TimelineFetcher(account: account, list: list, apiType: apiType)
+    
+    fetcher.timeline
+      .subscribe(Realm.rx.add(update: .all))
+      .disposed(by: bag)
+    
+    
     bindOutput()
 
   }
@@ -59,7 +77,16 @@ class ListTimelineViewModel {
   // MARK: - Methods
   private func bindOutput() {
     // Bind tweets
-
+    guard let realm = try? Realm() else { return }
+    tweets = Observable.changeset(from: realm.objects(Tweet.self))
     // Bind if an account is available
+    loggedIn = account
+      .map { status in
+        switch status {
+        case .authorized: return true
+        case .unavailable: return false
+        }
+      }
+      .asDriver(onErrorJustReturn: false)
   }
 }
